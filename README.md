@@ -1,11 +1,11 @@
 # Portfolio_Optimizer
 ## 커밋 템플릿
-feat: 새로운 기능 추가
-fix: 버그 수정
-docs: 문서 수정
-refactor: 코드 리펙토링
-test: 테스트 코드, 리펙토링 테스트 코드 추가
-chore: 설정 추가
+- feat: 새로운 기능 추가
+- fix: 버그 수정
+- docs: 문서 수정
+- refactor: 코드 리펙토링
+- test: 테스트 코드, 리펙토링 테스트 코드 추가
+- chore: 설정 추가
 
 ## MVC 패턴
 ```
