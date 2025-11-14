@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.app.domain.screening.mapper.MultifactorScreeningMapper">
+
+    <!-- Result Map 정의 -->
+    <resultMap id="MultifactorScreeningResultMap" type="com.app.domain.screening.entity.MultifactorScreening">
+        <id property="screeningId" column="screening_id"/>
+        <result property="sessionId" column="session_id"/>
+        <result property="ticker" column="ticker"/>
+        <result property="perScore" column="per_score"/>
+        <result property="pbrScore" column="pbr_score"/>
+        <result property="roeScore" column="roe_score"/>
+        <result property="perWeight" column="per_weight"/>
+        <result property="pbrWeight" column="pbr_weight"/>
+        <result property="roeWeight" column="roe_weight"/>
+        <result property="compositeScore" column="composite_score"/>
+        <result property="ranking" column="ranking"/>
+        <result property="isSelected" column="is_selected"/>
+        <result property="screeningDate" column="screening_date"/>
+        <result property="createdAt" column="created_at"/>
+
+        <!-- 조인된 주식 정보 -->
+        <result property="stockName" column="stock_name"/>
+        <result property="industry" column="industry"/>
+        <result property="per" column="per"/>
+        <result property="pbr" column="pbr"/>
+        <result property="roe" column="roe"/>
+        <result property="closePrice" column="close_price"/>
+        <result property="debtRatio" column="debt_ratio"/>
+    </resultMap>
+
+    <!-- 세션 존재 확인 -->
+    <select id="checkSessionExists" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM user_session
+        WHERE session_id = #{sessionId}
+    </select>
+
+    <!-- 사용자 세션 생성 -->
+    <insert id="insertUserSession">
+        INSERT IGNORE INTO user_session (session_id, user_ip, user_agent, created_at, last_accessed, is_active)
+    VALUES (#{sessionId}, #{userIp}, #{userAgent}, NOW(), NOW(), true)
+    </insert>
+
+    <!-- 스크리닝용 주식 데이터 조회 -->
+    <select id="selectAllStocksForScreening" resultMap="MultifactorScreeningResultMap">
+        SELECT
+        s.ticker,
+        s.stock_name,
+        s.industry,
+        s.per,
+        s.pbr,
+        s.roe,
+        s.close_price,
+        s.debt_ratio
+        FROM stock s
+        WHERE s.per IS NOT NULL
+        AND s.pbr IS NOT NULL
+        AND s.roe IS NOT NULL
+        AND s.per > 0
+        AND s.pbr > 0
+        AND s.roe > 0
+        <if test="maxDebtRatio != null">
+            AND (s.debt_ratio IS NULL OR s.debt_ratio &lt;= #{maxDebtRatio})
+        </if>
+        ORDER BY s.ticker
+    </select>
+
+    <!-- 스크리닝 결과 일괄 저장 -->
+    <insert id="insertScreeningResults" parameterType="list">
+        INSERT INTO multifactor_screening (
+        session_id, ticker, per_score, pbr_score, roe_score,
+        per_weight, pbr_weight, roe_weight, composite_score,
+        ranking, is_selected, screening_date, created_at
+        ) VALUES
+        <foreach collection="results" item="item" separator=",">
+            (
+            #{item.sessionId}, #{item.ticker}, #{item.perScore}, #{item.pbrScore}, #{item.roeScore},
+            #{item.perWeight}, #{item.pbrWeight}, #{item.roeWeight}, #{item.compositeScore},
+            #{item.ranking}, #{item.isSelected}, #{item.screeningDate}, #{item.createdAt}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 기존 스크리닝 결과 삭제 -->
+    <delete id="deleteScreeningResultsBySession">
+        DELETE FROM multifactor_screening
+        WHERE session_id = #{sessionId}
+    </delete>
+
+    <!-- 스크리닝 결과 조회 (페이징 및 정렬) -->
+    <select id="selectScreeningResults" resultMap="MultifactorScreeningResultMap">
+        SELECT
+        ms.screening_id,
+        ms.session_id,
+        ms.ticker,
+        ms.per_score,
+        ms.pbr_score,
+        ms.roe_score,
+        ms.per_weight,
+        ms.pbr_weight,
+        ms.roe_weight,
+        ms.composite_score,
+        ms.ranking,
+        ms.is_selected,
+        ms.screening_date,
+        ms.created_at,
+        s.stock_name,
+        s.industry,
+        s.per,
+        s.pbr,
+        s.roe,
+        s.close_price,
+        s.debt_ratio
+        FROM multifactor_screening ms
+        INNER JOIN stock s ON ms.ticker = s.ticker
+        WHERE ms.session_id = #{sessionId}
+        <choose>
+            <when test="sortBy == 'ranking'">
+                ORDER BY ms.ranking
+                <if test="sortDirection == 'DESC'">DESC</if>
+                <if test="sortDirection != 'DESC'">ASC</if>
+            </when>
+            <when test="sortBy == 'compositeScore'">
+                ORDER BY ms.composite_score
+                <if test="sortDirection == 'DESC'">DESC</if>
+                <if test="sortDirection != 'DESC'">ASC</if>
+            </when>
+            <when test="sortBy == 'per'">
+                ORDER BY s.per
+                <if test="sortDirection == 'DESC'">DESC</if>
+                <if test="sortDirection != 'DESC'">ASC</if>
+            </when>
+            <when test="sortBy == 'pbr'">
+                ORDER BY s.pbr
+                <if test="sortDirection == 'DESC'">DESC</if>
+                <if test="sortDirection != 'DESC'">ASC</if>
+            </when>
+            <when test="sortBy == 'roe'">
+                ORDER BY s.roe
+                <if test="sortDirection == 'DESC'">DESC</if>
+                <if test="sortDirection != 'DESC'">ASC</if>
+            </when>
+            <when test="sortBy == 'stockName'">
+                ORDER BY s.stock_name
+                <if test="sortDirection == 'DESC'">DESC</if>
+                <if test="sortDirection != 'DESC'">ASC</if>
+            </when>
+            <otherwise>
+                ORDER BY ms.ranking ASC
+            </otherwise>
+        </choose>
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 스크리닝 결과 총 개수 조회 -->
+    <select id="countScreeningResults" resultType="int">
+        SELECT COUNT(*)
+        FROM multifactor_screening
+        WHERE session_id = #{sessionId}
+    </select>
+
+    <!-- 상위 50개 선별된 종목 조회 -->
+    <select id="selectTop50Results" resultMap="MultifactorScreeningResultMap">
+        SELECT
+            ms.screening_id,
+            ms.session_id,
+            ms.ticker,
+            ms.per_score,
+            ms.pbr_score,
+            ms.roe_score,
+            ms.per_weight,
+            ms.pbr_weight,
+            ms.roe_weight,
+            ms.composite_score,
+            ms.ranking,
+            ms.is_selected,
+            ms.screening_date,
+            ms.created_at,
+            s.stock_name,
+            s.industry,
+            s.per,
+            s.pbr,
+            s.roe,
+            s.close_price,
+            s.debt_ratio
+        FROM multifactor_screening ms
+                 INNER JOIN stock s ON ms.ticker = s.ticker
+        WHERE ms.session_id = #{sessionId}
+          AND ms.is_selected = true
+        ORDER BY ms.ranking ASC
+            LIMIT 50
+    </select>
+
+    <!-- 특정 스크리닝 결과 상세 조회 -->
+    <select id="selectScreeningResultById" resultMap="MultifactorScreeningResultMap">
+        SELECT
+            ms.screening_id,
+            ms.session_id,
+            ms.ticker,
+            ms.per_score,
+            ms.pbr_score,
+            ms.roe_score,
+            ms.per_weight,
+            ms.pbr_weight,
+            ms.roe_weight,
+            ms.composite_score,
+            ms.ranking,
+            ms.is_selected,
+            ms.screening_date,
+            ms.created_at,
+            s.stock_name,
+            s.industry,
+            s.per,
+            s.pbr,
+            s.roe,
+            s.close_price,
+            s.debt_ratio
+        FROM multifactor_screening ms
+                 INNER JOIN stock s ON ms.ticker = s.ticker
+        WHERE ms.screening_id = #{screeningId}
+    </select>
+
+    <!-- 스크리닝 결과 업데이트 -->
+    <update id="updateScreeningResult">
+        UPDATE multifactor_screening
+        SET
+            per_score = #{perScore},
+            pbr_score = #{pbrScore},
+            roe_score = #{roeScore},
+            per_weight = #{perWeight},
+            pbr_weight = #{pbrWeight},
+            roe_weight = #{roeWeight},
+            composite_score = #{compositeScore},
+            ranking = #{ranking},
+            is_selected = #{isSelected}
+        WHERE screening_id = #{screeningId}
+    </update>
+
+    <!-- 세션별 최근 스크리닝 날짜 조회 -->
+    <select id="selectLatestScreeningDate" resultType="java.time.LocalDate">
+        SELECT MAX(screening_date)
+        FROM multifactor_screening
+        WHERE session_id = #{sessionId}
+    </select>
+
+</mapper>
