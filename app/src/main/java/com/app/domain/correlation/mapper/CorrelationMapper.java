@@ -7,13 +7,13 @@ import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 상관관계 분석 데이터 접근 객체
  */
 @Mapper
 public interface CorrelationMapper {
-
 
     /**
      * 상관관계 분석 결과 저장
@@ -128,5 +128,88 @@ public interface CorrelationMapper {
         public String getRiskLevel() { return riskLevel; }
         public void setRiskLevel(String riskLevel) { this.riskLevel = riskLevel; }
     }
+
+
+    //---------------[분산 최적화 로직] 25.11.06 추가 메서드 ---------------//
+    /**
+     * 세션 ID로 상관관계 데이터 조회
+     * @param sessionId 세션 ID
+     * @return 상관관계 데이터 목록
+     */
+    List<CorrelationAnalysis> selectCorrelationsBySessionId(@Param("sessionId") String sessionId);
+
+    /**
+     * 특정 티커들 간의 상관관계 조회
+     * @param sessionId 세션 ID
+     * @param tickers 티커 목록
+     * @return 상관관계 데이터 목록
+     */
+    List<CorrelationAnalysis> selectCorrelationsByTickers(
+            @Param("sessionId") String sessionId,
+            @Param("tickers") List<String> tickers
+    );
+
+    /**
+     * 특정 티커와 다른 티커들 간의 상관관계 조회
+     * @param sessionId 세션 ID
+     * @param ticker 기준 티커
+     * @return 상관관계 데이터 목록
+     */
+    List<CorrelationAnalysis> selectCorrelationsByTicker(
+            @Param("sessionId") String sessionId,
+            @Param("ticker") String ticker
+    );
+
+    /**
+     * 상관관계 데이터 삽입
+     * @param correlationAnalysis 상관관계 데이터
+     * @return 삽입된 행 수
+     */
+    int insertCorrelation(CorrelationAnalysis correlationAnalysis);
+
+    /**
+     * 상관관계 데이터 일괄 삽입
+     * @param correlations 상관관계 데이터 목록
+     * @return 삽입된 행 수
+     */
+    int insertCorrelationsBatch(@Param("correlations") List<CorrelationAnalysis> correlations);
+
+// ==========  추가: 종목명 조회 메서드 ==========
+
+    /**
+     * 종목 정보 DTO (종목명 조회용)
+     */
+    class StockInfo {
+        private String ticker;
+        private String stockName;
+
+        public StockInfo() {}
+
+        public StockInfo(String ticker, String stockName) {
+            this.ticker = ticker;
+            this.stockName = stockName;
+        }
+
+        public String getTicker() { return ticker; }
+        public void setTicker(String ticker) { this.ticker = ticker; }
+
+        public String getStockName() { return stockName; }
+        public void setStockName(String stockName) { this.stockName = stockName; }
+    }
+
+    /**
+     * 티커 목록으로 종목명 조회
+     * @param tickers 티커 목록
+     * @return Map<ticker, stockName>
+     */
+    List<StockInfo> findStockInfosByTickers(@Param("tickers") List<String> tickers);
+
+    /**
+     * 단일 티커로 종목명 조회
+     * @param ticker 티커
+     * @return 종목명
+     */
+    String findStockNameByTicker(@Param("ticker") String ticker);
+
 
 }//interface
