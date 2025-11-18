@@ -259,8 +259,9 @@ public class DiversificationService {
                 selected.add(score);
                 selectedTickers.add(currentTicker);
 
-                log.info("종목 선택: {} (분산점수: {:.4f}, 평균상관계수: {:.4f})",
-                        currentTicker, score.getDiversificationScore(), score.getAvgCorrelation());
+                log.info("종목 선택: {} [{}] (분산점수: {}, 평균상관계수: {})",
+                        currentTicker, score.getStockName(),
+                        score.getDiversificationScore(), score.getAvgCorrelation());
             }
         }
 

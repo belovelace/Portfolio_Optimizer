@@ -333,7 +333,7 @@ public class CorrelationController {
         try {
             DiversificationResponse response = diversificationService.optimizeDiversification(request);
 
-            log.info("분산 최적화 완료 - 선택: {}개, 제외: {}개, 포트폴리오 분산점수: {:.2f}",
+            log.info("분산 최적화 완료 - 선택: {}개, 제외: {}개, 포트폴리오 분산점수: {}",
                     response.getSelectedStocks().size(),
                     response.getExcludedStocks().size(),
                     response.getPortfolioDiversificationScore());
