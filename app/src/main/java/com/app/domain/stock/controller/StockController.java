@@ -24,7 +24,6 @@ import java.util.Map;
 public class StockController {
 
     private final StockService stockService;
-
     private final UserSelectedAssetsService selectedAssetsService;
 
     /**
