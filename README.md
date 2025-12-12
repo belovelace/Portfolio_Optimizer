@@ -1,4 +1,8 @@
 # Portfolio_Optimizer
+## 최종 발표 자료
+(피그마 링크) https://www.figma.com/deck/G758gJraP55Y7l4jxbhx0z/%EB%8D%B0%EC%9D%B4%ED%84%B0%EC%B2%98%EB%A6%AC%ED%94%84%EB%A1%9C%EA%B7%B8%EB%9E%98%EB%B0%8D?node-id=1-42&t=mhrlUZRvov5hElgR-1
+
+
 ## 커밋 템플릿
 - feat: 새로운 기능 추가
 - fix: 버그 수정
