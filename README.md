@@ -1,7 +1,9 @@
 # Portfolio_Optimizer
 ## 최종 발표 자료
 (피그마 링크) https://www.figma.com/deck/G758gJraP55Y7l4jxbhx0z/%EB%8D%B0%EC%9D%B4%ED%84%B0%EC%B2%98%EB%A6%AC%ED%94%84%EB%A1%9C%EA%B7%B8%EB%9E%98%EB%B0%8D?node-id=1-42&t=mhrlUZRvov5hElgR-1
-
+## 초기 발표 자료
+(피그마 링크)
+https://www.figma.com/deck/2dBqzFjt5CjVAdOfYWDhpt/%EB%8D%B0%ED%94%84---%EC%A3%BC%EC%A0%9C-%EB%B0%9C%ED%91%9C%EC%9E%90%EB%A3%8C?node-id=1-317&t=1GpTJt6oW789N8rg-1
 
 ## 커밋 템플릿
 - feat: 새로운 기능 추가
